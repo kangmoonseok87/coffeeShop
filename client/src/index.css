@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+:root {
+  --primary: #6F4E37;
+  --secondary: #A67B5B;
+  --accent: #ECB176;
+  --background: #FED8B1;
+  --text: #3C2A21;
+  --white: #FFFFFF;
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+header {
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 1.5rem 0;
+  box-shadow: 0 4px 6px var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+nav a {
+  color: var(--white);
+  text-decoration: none;
+  margin-left: 2rem;
+  font-weight: 600;
+  transition: opacity 0.3s;
+}
+
+nav a:hover {
+  opacity: 0.8;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px var(--shadow);
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.btn {
+  display: inline-block;
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background-color 0.3s;
+}
+
+.btn:hover {
+  background-color: var(--secondary);
+}
+
+.btn-accent {
+  background-color: var(--accent);
+  color: var(--text);
+}
+
+.cart-section {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-top: 3rem;
+  box-shadow: 0 10px 15px -3px var(--shadow);
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badge-pending { background-color: #ffeeba; color: #856404; }
+.badge-completed { background-color: #d4edda; color: #155724; }
