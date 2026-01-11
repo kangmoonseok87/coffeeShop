@@ -48,10 +48,20 @@ const initialMenus = [
   }
 ];
 
+const initialInventory = {
+  1: 20, // 아메리카노 (ICE)
+  2: 15, // 아메리카노 (HOT)
+  3: 3,  // 카페라떼
+  4: 0   // 바닐라라떼
+};
+
 function App() {
   const [menus] = useState(initialMenus);
   const [cart, setCart] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState({});
+  const [view, setView] = useState('order'); // 'order' or 'admin'
+  const [inventory, setInventory] = useState(initialInventory);
+  const [orders, setOrders] = useState([]);
 
   const handleOptionChange = (menuId, optionId) => {
     setSelectedOptions(prev => {
@@ -102,6 +112,19 @@ function App() {
     });
   };
 
+  const updateInventory = (menuId, change) => {
+    setInventory(prev => ({
+      ...prev,
+      [menuId]: Math.max(0, prev[menuId] + change)
+    }));
+  };
+
+  const updateOrderStatus = (orderId, nextStatus) => {
+    setOrders(prev => prev.map(order =>
+      order.id === orderId ? { ...order, status: nextStatus } : order
+    ));
+  };
+
   const updateQuantity = (cartItemId, change) => {
     setCart(prev => {
       return prev.map(item => {
@@ -117,6 +140,16 @@ function App() {
   const totalAmount = cart.reduce((acc, curr) => acc + (curr.totalItemPrice * curr.quantity), 0);
 
   const handleOrder = () => {
+    const newOrder = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      items: [...cart],
+      totalAmount,
+      status: '주문 접수'
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
     alert(`총 ${totalAmount.toLocaleString()}원 주문이 완료되었습니다!`);
     setCart([]);
     setSelectedOptions({});
@@ -125,90 +158,209 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <div className="logo">COZY</div>
+        <div className="logo" onClick={() => setView('order')} style={{ cursor: 'pointer' }}>COZY</div>
         <nav className="nav">
-          <a href="#" className="nav-item active">주문하기</a>
-          <a href="#" className="nav-item">관리자</a>
+          <button
+            className={`nav-item ${view === 'order' ? 'active' : ''}`}
+            onClick={() => setView('order')}
+          >
+            주문하기
+          </button>
+          <button
+            className={`nav-item ${view === 'admin' ? 'active' : ''}`}
+            onClick={() => setView('admin')}
+          >
+            관리자
+          </button>
         </nav>
       </header>
 
-      <main className="menu-grid">
-        {menus.map(menu => (
-          <div key={menu.id} className="menu-card">
-            <div className="menu-image-container">
-              <img src={menu.image} alt={menu.name} className="menu-image" />
-            </div>
-            <div className="menu-info">
-              <h3 className="menu-name">{menu.name}</h3>
-              <p className="menu-price">{menu.price.toLocaleString()}원</p>
-              <p className="menu-desc">{menu.description}</p>
+      {view === 'order' ? (
+        <>
 
-              <div className="options">
-                {menu.options.map(opt => (
-                  <label key={opt.id} className="option-item">
-                    <input
-                      type="checkbox"
-                      checked={(selectedOptions[menu.id] || []).includes(opt.id)}
-                      onChange={() => handleOptionChange(menu.id, opt.id)}
-                    />
-                    {opt.name} (+{opt.price.toLocaleString()}원)
-                  </label>
-                ))}
+          <main className="menu-grid">
+            {menus.map(menu => (
+              <div key={menu.id} className="menu-card">
+                <div className="menu-image-container">
+                  <img src={menu.image} alt={menu.name} className="menu-image" />
+                </div>
+                <div className="menu-info">
+                  <h3 className="menu-name">{menu.name}</h3>
+                  <p className="menu-price">{menu.price.toLocaleString()}원</p>
+                  <p className="menu-desc">{menu.description}</p>
+
+                  <div className="options">
+                    {menu.options.map(opt => (
+                      <label key={opt.id} className="option-item">
+                        <input
+                          type="checkbox"
+                          checked={(selectedOptions[menu.id] || []).includes(opt.id)}
+                          onChange={() => handleOptionChange(menu.id, opt.id)}
+                        />
+                        {opt.name} (+{opt.price.toLocaleString()}원)
+                      </label>
+                    ))}
+                  </div>
+
+                  <button className="btn-add" onClick={() => addToCart(menu)}>
+                    담기
+                  </button>
+                </div>
+              </div>
+            ))}
+          </main>
+
+          <section className="cart-section">
+            <div className="cart-container">
+              <div className="cart-items-wrapper">
+                <h3>주문 내역</h3>
+                <div className="cart-list">
+                  {cart.length === 0 ? (
+                    <p style={{ color: '#999' }}>장바구니가 비어있습니다.</p>
+                  ) : (
+                    cart.map(item => (
+                      <div key={item.cartItemId} className="cart-item">
+                        <div className="cart-item-info">
+                          <strong>{item.name}</strong>
+                          {item.options.length > 0 && (
+                            <span className="cart-item-options">옵션: {item.options.join(', ')}</span>
+                          )}
+                        </div>
+                        <div className="cart-item-price-qty">
+                          <div className="quantity-controls">
+                            <button className="qty-btn" onClick={() => updateQuantity(item.cartItemId, -1)}>-</button>
+                            <span className="qty-value">{item.quantity}개</span>
+                            <button className="qty-btn" onClick={() => updateQuantity(item.cartItemId, 1)}>+</button>
+                          </div>
+                          <span className="item-total-price">{(item.totalItemPrice * item.quantity).toLocaleString()}원</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
-              <button className="btn-add" onClick={() => addToCart(menu)}>
-                담기
-              </button>
+              <div className="cart-summary">
+                <div className="total-row">
+                  <span className="total-label">총금액</span>
+                  <span className="total-price">{totalAmount.toLocaleString()}원</span>
+                </div>
+                <button
+                  className="btn-order"
+                  disabled={cart.length === 0}
+                  onClick={handleOrder}
+                >
+                  주문하기
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </main>
+          </section>
+        </>
+      ) : (
+        <div className="admin-container">
+          <section className="admin-section">
+            <h2 className="admin-title">관리자 대시보드</h2>
+            <div className="summary-grid">
+              <div className="summary-card">
+                <span className="summary-label">총 주문 수</span>
+                <span className="summary-value">{orders.length}</span>
+              </div>
+              <div className="summary-card">
+                <span className="summary-label">주문 접수</span>
+                <span className="summary-value">{orders.filter(o => o.status === '주문 접수').length}</span>
+              </div>
+              <div className="summary-card">
+                <span className="summary-label">제조 중</span>
+                <span className="summary-value">{orders.filter(o => o.status === '제조 중').length}</span>
+              </div>
+              <div className="summary-card">
+                <span className="summary-label">제조 완료</span>
+                <span className="summary-value">{orders.filter(o => o.status === '제조 완료').length}</span>
+              </div>
+            </div>
+          </section>
 
-      <section className="cart-section">
-        <div className="cart-container">
-          <div className="cart-items-wrapper">
-            <h3>주문 내역</h3>
-            <div className="cart-list">
-              {cart.length === 0 ? (
-                <p style={{ color: '#999' }}>장바구니가 비어있습니다.</p>
+          <section className="admin-section">
+            <h2 className="admin-title">재고 현황</h2>
+            <div className="inventory-table-container">
+              <table className="inventory-table">
+                <thead>
+                  <tr>
+                    <th>메뉴명</th>
+                    <th>재고 개수</th>
+                    <th>상태</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {menus.map(menu => {
+                    const count = inventory[menu.id] || 0;
+                    let statusText = '정상';
+                    let statusClass = 'status-normal';
+                    if (count === 0) {
+                      statusText = '품절';
+                      statusClass = 'status-soldout';
+                    } else if (count < 5) {
+                      statusText = '주의';
+                      statusClass = 'status-warning';
+                    }
+
+                    return (
+                      <tr key={menu.id}>
+                        <td>{menu.name}</td>
+                        <td>{count}개</td>
+                        <td><span className={`status-badge ${statusClass}`}>{statusText}</span></td>
+                        <td>
+                          <div className="inventory-controls">
+                            <button className="qty-btn" onClick={() => updateInventory(menu.id, -1)}>-</button>
+                            <button className="qty-btn" onClick={() => updateInventory(menu.id, 1)}>+</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="admin-section">
+            <h2 className="admin-title">주문 현황</h2>
+            <div className="order-list">
+              {orders.length === 0 ? (
+                <p className="no-orders" style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>접수된 주문이 없습니다.</p>
               ) : (
-                cart.map(item => (
-                  <div key={item.cartItemId} className="cart-item">
-                    <div className="cart-item-info">
-                      <strong>{item.name}</strong>
-                      {item.options.length > 0 && (
-                        <span className="cart-item-options">옵션: {item.options.join(', ')}</span>
-                      )}
+                orders.map(order => (
+                  <div key={order.id} className="admin-order-card">
+                    <div className="order-header">
+                      <span className="order-time">{order.date} {order.time}</span>
+                      <span className={`order-status-tag ${order.status === '제조 완료' ? 'done' : ''}`}>{order.status}</span>
                     </div>
-                    <div className="cart-item-price-qty">
-                      <div className="quantity-controls">
-                        <button className="qty-btn" onClick={() => updateQuantity(item.cartItemId, -1)}>-</button>
-                        <span className="qty-value">{item.quantity}개</span>
-                        <button className="qty-btn" onClick={() => updateQuantity(item.cartItemId, 1)}>+</button>
+                    <div className="order-content">
+                      <div className="order-items">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="order-item-row">
+                            <span>{item.name} {item.options.length > 0 ? `(${item.options.join(', ')})` : ''} - {item.quantity}개</span>
+                          </div>
+                        ))}
                       </div>
-                      <span className="item-total-price">{(item.totalItemPrice * item.quantity).toLocaleString()}원</span>
+                      <div className="order-footer">
+                        <span className="order-total">금액: {order.totalAmount.toLocaleString()}원</span>
+                        {order.status === '주문 접수' && (
+                          <button className="btn-transition" onClick={() => updateOrderStatus(order.id, '제조 중')}>제조 시작</button>
+                        )}
+                        {order.status === '제조 중' && (
+                          <button className="btn-transition finish" onClick={() => updateOrderStatus(order.id, '제조 완료')}>제조 완료</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </div>
-
-          <div className="cart-summary">
-            <div className="total-row">
-              <span className="total-label">총금액</span>
-              <span className="total-price">{totalAmount.toLocaleString()}원</span>
-            </div>
-            <button
-              className="btn-order"
-              disabled={cart.length === 0}
-              onClick={handleOrder}
-            >
-              주문하기
-            </button>
-          </div>
+          </section>
         </div>
-      </section>
+      )}
     </div>
   )
 }
