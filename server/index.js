@@ -40,8 +40,11 @@ app.get('/api/menu', async (req, res) => {
         const result = await db.query(query); // 데이터베이스에 위 질문(SQL)을 보냅니다.
         res.json(result.rows); // 결과를 클라이언트(화면)에 돌려줍니다.
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: '메뉴 정보를 가져오는데 실패했습니다.' });
+        console.error('메뉴 로딩 실패:', err);
+        res.status(500).json({
+            message: '메뉴 정보를 가져오는데 실패했습니다.',
+            error: err.message // 원인 파악을 위해 상세 에러 메시지 포함
+        });
     }
 });
 

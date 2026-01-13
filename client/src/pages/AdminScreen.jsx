@@ -43,7 +43,7 @@ const AdminScreen = () => {
         // 현재 상태에 따라 다음 단계의 상태를 결정합니다.
         if (currentStatus === '주문 접수') nextStatus = '제조 중';
         else if (currentStatus === '제조 중') nextStatus = '제조 완료';
-        else return; //        // 서버의 POST /api/orders 통로로 데이터를 보냅니다.
+        else return;
         axios.patch(`${API_URL}/api/admin/orders/${id}`, { status: nextStatus })
             .then(() => fetchData()) // 변경 후 최신 목록으로 화면 갱신
             .catch(err => alert('상태 업데이트 실패: ' + err.message));
