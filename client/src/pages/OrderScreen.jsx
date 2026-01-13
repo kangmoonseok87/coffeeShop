@@ -87,7 +87,7 @@ const OrderScreen = () => {
         const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
         // 서버의 POST /api/orders 통로로 데이터를 보냅니다.
-        axios.post('http://localhost:3001/api/orders', { items: cart, totalAmount })
+        axios.post(`${API_URL}/api/orders`, { items: cart, totalAmount })
             .then(() => {
                 setCart([]); // 장바구니 비우기
                 setShowModal(true); // 성공 모달 띄우기
