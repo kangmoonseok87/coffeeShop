@@ -177,17 +177,11 @@ const OrderScreen = () => {
 
             {/* 하단 고정 장바구니 바 (Cart Bar) */}
             {cart.length > 0 && (
-                <div style={{
-                    position: 'fixed', bottom: 0, left: 0, right: 0,
-                    width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                    backdropFilter: 'blur(25px)', borderRadius: '32px 32px 0 0', padding: '2rem 10%',
-                    boxShadow: '0 -10px 40px rgba(0,0,0,0.1)', borderTop: '1px solid rgba(61,43,31,0.08)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1000
-                }}>
+                <div className="cart-bar">
                     {/* 왼쪽: 담은 상품 목록 */}
-                    <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '1.5rem', letterSpacing: '-0.5px' }}>장바구니</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '1rem' }}>
+                    <div className="cart-items-container">
+                        <h3>장바구니</h3>
+                        <div className="cart-items-scroll">
                             {cart.map(item => (
                                 <div key={item.cartId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
@@ -205,7 +199,7 @@ const OrderScreen = () => {
                                             <button onClick={() => updateCartQuantity(item.cartId, 1)} className="ctrl-btn" style={{ width: '22px', height: '22px', borderRadius: '5px', fontSize: '0.8rem' }}><Plus size={10} /></button>
                                         </div>
                                     </div>
-                                    <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--primary)', minWidth: '100px', textAlign: 'right' }}>
+                                    <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--primary)', minWidth: '80px', textAlign: 'right' }}>
                                         {(item.price * item.quantity).toLocaleString()}원
                                     </div>
                                 </div>
@@ -214,14 +208,14 @@ const OrderScreen = () => {
                     </div>
 
                     {/* 오른쪽: 총합계 및 주문 버튼 */}
-                    <div style={{ marginLeft: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%', minHeight: '120px' }}>
-                        <div style={{ textAlign: 'right', marginBottom: '1.5rem' }}>
-                            <p style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>
-                                <span style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-muted)', marginRight: '0.5rem' }}>총금액 :</span>
-                                {cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toLocaleString()}원
+                    <div className="cart-summary">
+                        <div>
+                            <p>
+                                <span>총금액 :</span>
+                                <strong>{cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toLocaleString()}원</strong>
                             </p>
                         </div>
-                        <button className="btn-main" style={{ padding: '1.2rem 4rem', borderRadius: '15px', fontSize: '1.1rem', width: '100%', minWidth: '240px' }} onClick={placeOrder}>
+                        <button className="btn-main" onClick={placeOrder}>
                             주문하기
                         </button>
                     </div>
