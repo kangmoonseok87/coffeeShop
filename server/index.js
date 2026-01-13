@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,14 +15,45 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend server is running with DB integration' });
 });
 
-// 1. Get Menu
+// 1. Get Menu with Options
 app.get('/api/menu', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM menus ORDER BY id ASC');
+        const query = `
+            SELECT m.*, 
+                   COALESCE(json_agg(json_build_object('id', o.id, 'name', o.name, 'price', o.price)) 
+                   FILTER (WHERE o.id IS NOT NULL), '[]') as options
+            FROM menus m
+            LEFT JOIN options o ON m.id = o.menu_id
+            GROUP BY m.id
+            ORDER BY m.id ASC
+        `;
+        const result = await db.query(query);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: '메뉴 정보를 가져오는데 실패했습니다.' });
+    }
+});
+
+// 1-1. Update Menu Stock (Admin Only)
+app.patch('/api/admin/menu/:id/stock', async (req, res) => {
+    const { id } = req.params;
+    const { stock } = req.body;
+
+    try {
+        const result = await db.query(
+            'UPDATE menus SET stock = $1 WHERE id = $2 RETURNING *',
+            [stock, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: '메뉴를 찾을 수 없습니다.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: '재고 업데이트에 실패했습니다.' });
     }
 });
 
@@ -42,16 +73,19 @@ app.post('/api/orders', async (req, res) => {
         // Insert into orders table
         const orderRes = await client.query(
             'INSERT INTO orders (total_amount, status) VALUES ($1, $2) RETURNING id',
-            [totalAmount, 'pending']
+            [totalAmount, '주문 접수']
         );
         const orderId = orderRes.rows[0].id;
 
         // Process each item
         for (const item of items) {
+            // Options as a string or JSON (PRD 5.1/5.2)
+            const optionsText = item.selectedOptions ? item.selectedOptions.join(', ') : '';
+
             // Insert into order_items
             await client.query(
-                'INSERT INTO order_items (order_id, menu_id, quantity, price) VALUES ($1, $2, $3, $4)',
-                [orderId, item.id, item.quantity, item.price]
+                'INSERT INTO order_items (order_id, menu_id, quantity, price, selected_options) VALUES ($1, $2, $3, $4, $5)',
+                [orderId, item.id, item.quantity, item.price, optionsText]
             );
 
             // Update stock in menus table
@@ -82,7 +116,13 @@ app.get('/api/admin/orders', async (req, res) => {
         // Use a join to get order items for each order
         const query = `
             SELECT o.*, 
-                   json_agg(json_build_object('id', m.id, 'name', m.name, 'quantity', oi.quantity, 'price', oi.price)) as items
+                   json_agg(json_build_object(
+                       'id', m.id, 
+                       'name', m.name, 
+                       'quantity', oi.quantity, 
+                       'price', oi.price,
+                       'selectedOptions', oi.selected_options
+                   )) as items
             FROM orders o
             JOIN order_items oi ON o.id = oi.order_id
             JOIN menus m ON oi.menu_id = m.id
@@ -107,25 +147,49 @@ app.get('/api/admin/orders', async (req, res) => {
     }
 });
 
-// 4. Update Order Status
+// 4. Update Order Status (PRD Progress flow + Restocking for Cancellation)
 app.patch('/api/admin/orders/:id', async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status } = req.body; // '제조 중', '제조 완료', '취소됨'
 
+    const client = await db.pool.connect();
     try {
-        const result = await db.query(
+        await client.query('BEGIN');
+
+        // 1. 상태 업데이트
+        const updateResult = await client.query(
             'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
             [status, id]
         );
 
-        if (result.rowCount === 0) {
+        if (updateResult.rowCount === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ message: '주문을 찾을 수 없습니다.' });
         }
 
-        res.json(result.rows[0]);
+        // 2. 만약 상태가 '취소됨'이라면 재고 복구 로직 실행
+        if (status === '취소됨') {
+            const itemsResult = await client.query(
+                'SELECT menu_id, quantity FROM order_items WHERE order_id = $1',
+                [id]
+            );
+
+            for (const item of itemsResult.rows) {
+                await client.query(
+                    'UPDATE menus SET stock = stock + $1 WHERE id = $2',
+                    [item.quantity, item.menu_id]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json(updateResult.rows[0]);
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err);
-        res.status(500).json({ message: '주문 상태 업데이트에 실패했습니다.' });
+        res.status(500).json({ message: '주문 상태 업데이트 혹은 재고 복구에 실패했습니다.' });
+    } finally {
+        client.release();
     }
 });
 
