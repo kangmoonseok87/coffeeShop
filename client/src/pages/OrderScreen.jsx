@@ -14,12 +14,14 @@ const OrderScreen = () => {
     const [selectedOptions, setSelectedOptions] = useState({}); // 현재 메뉴별로 선택된 체크박스 옵션 정보
 
     // --- 2. 서버 데이터 가져오기 (useEffect) ---
-    // 화면이 처음 나타났을 때(마운트될 때) 한 번만 실행됩니다.
+    // 배포 환경의 주소를 사용하고, 없으면 기본 로컬 주소를 사용합니다.
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
     useEffect(() => {
-        axios.get('http://localhost:3001/api/menu')
-            .then(res => setMenu(res.data)) // 성공하면 받아온 데이터를 menu 상태에 저장
+        axios.get(`${API_URL}/api/menu`)
+            .then(res => setMenu(res.data))
             .catch(err => console.error(err));
-    }, []);
+    }, [API_URL]);
 
     // --- 3. 주요 기능 로직 (함수들) ---
 

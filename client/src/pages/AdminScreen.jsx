@@ -14,19 +14,21 @@ const AdminScreen = () => {
     const [orderToCancel, setOrderToCancel] = useState(null);       // 취소 대상 주문의 ID
 
     // --- 2. 데이터 자동 갱신 (useEffect) ---
-    // 처음 로드될 때와 5초 간격으로 서버에서 새 주문 정보를 가져옵니다.
+    // 배포 환경의 주소를 사용하고, 없으면 기본 로컬 주소를 사용합니다.
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
     useEffect(() => {
-        fetchData(); // 즉시 한 번 호출
-        const interval = setInterval(fetchData, 5000); // 5초(5000ms)마다 반복 호출
-        return () => clearInterval(interval); // 화면을 나갈 때 반복을 멈춥니다.
-    }, []);
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
+        return () => clearInterval(interval);
+    }, [API_URL]);
 
     /** [데이터 가져오기] 주문 목록과 메뉴 목록을 동시에 병렬로(Promise.all) 가져옵니다. */
     const fetchData = async () => {
         try {
             const [orderRes, menuRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/admin/orders'),
-                axios.get('http://localhost:3001/api/menu')
+                axios.get(`${API_URL}/api/admin/orders`),
+                axios.get(`${API_URL}/api/menu`)
             ]);
             setOrders(orderRes.data);
             setMenus(menuRes.data);
@@ -41,9 +43,8 @@ const AdminScreen = () => {
         // 현재 상태에 따라 다음 단계의 상태를 결정합니다.
         if (currentStatus === '주문 접수') nextStatus = '제조 중';
         else if (currentStatus === '제조 중') nextStatus = '제조 완료';
-        else return; // 이미 완료되었거나 취소된 경우 아무 작업도 하지 않음
-
-        axios.patch(`http://localhost:3001/api/admin/orders/${id}`, { status: nextStatus })
+        else return; //        // 서버의 POST /api/orders 통로로 데이터를 보냅니다.
+        axios.patch(`${API_URL}/api/admin/orders/${id}`, { status: nextStatus })
             .then(() => fetchData()) // 변경 후 최신 목록으로 화면 갱신
             .catch(err => alert('상태 업데이트 실패: ' + err.message));
     };
@@ -52,7 +53,7 @@ const AdminScreen = () => {
     const updateStock = (id, currentStock, delta) => {
         // 0 미만으로 내려가지 않게 Math.max를 사용합니다.
         const newStock = Math.max(0, currentStock + delta);
-        axios.patch(`http://localhost:3001/api/admin/menu/${id}/stock`, { stock: newStock })
+        axios.patch(`${API_URL}/api/admin/menu/${id}/stock`, { stock: newStock })
             .then(() => fetchData())
             .catch(err => alert('재고 업데이트 실패: ' + err.message));
     };
@@ -234,7 +235,7 @@ const AdminScreen = () => {
                                 style={{ flex: 1, background: '#c62828' }}
                                 onClick={() => {
                                     // 서버로 '취소됨' 상태 전송
-                                    axios.patch(`http://localhost:3001/api/admin/orders/${orderToCancel}`, { status: '취소됨' })
+                                    axios.patch(`${API_URL}/api/admin/orders/${orderToCancel}`, { status: '취소됨' })
                                         .then(() => {
                                             fetchData(); // 화면 갱신
                                             setShowCancelModal(false);
