@@ -92,15 +92,15 @@ const AdminScreen = () => {
                         <div className="stat-value">{stats.total}</div>
                         <div className="stat-label">Total Orders</div>
                     </div>
-                    <div className="stat-item" style={{ borderLeft: '1px solid var(--border-light)' }}>
+                    <div className="stat-item">
                         <div className="stat-value" style={{ color: '#ffa000' }}>{stats.pending}</div>
                         <div className="stat-label">Pending</div>
                     </div>
-                    <div className="stat-item" style={{ borderLeft: '1px solid var(--border-light)' }}>
+                    <div className="stat-item">
                         <div className="stat-value" style={{ color: '#1976d2' }}>{stats.preparing}</div>
                         <div className="stat-label">Preparing</div>
                     </div>
-                    <div className="stat-item" style={{ borderLeft: '1px solid var(--border-light)' }}>
+                    <div className="stat-item">
                         <div className="stat-value" style={{ color: '#388e3c' }}>{stats.done}</div>
                         <div className="stat-label">Completed</div>
                     </div>

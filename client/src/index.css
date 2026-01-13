@@ -135,12 +135,19 @@ nav a.active {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 0;
+  padding: 0 !important;
+  /* 내부 패딩 제거하여 border가 끝까지 닿게 함 */
 }
 
 .stat-item {
   text-align: center;
-  padding: 1.5rem;
+  padding: 2rem 1rem;
+  border-right: 1px solid var(--border-light);
+}
+
+.stat-item:last-child {
+  border-right: none;
 }
 
 .stat-value {
@@ -481,6 +488,24 @@ nav a.active {
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  /* 관리자 통계 그리드 모바일 대응 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .stat-item {
+    padding: 1.5rem 0.5rem !important;
+  }
+
+  .stat-item:nth-child(2n) {
+    border-right: none;
+  }
+
+  .stat-item:nth-child(1),
+  .stat-item:nth-child(2) {
+    border-bottom: 1px solid var(--border-light);
   }
 
   .order-row {
