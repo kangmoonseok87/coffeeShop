@@ -19,6 +19,7 @@ const dbConfig = process.env.DATABASE_URL
         database: process.env.DB_NAME,
         password: process.env.DB_PASSWORD,
         port: process.env.DB_PORT,
+        ssl: { rejectUnauthorized: false } // 개별 변수 사용 시에도 SSL 필수
     };
 
 const pool = new Pool(dbConfig);
