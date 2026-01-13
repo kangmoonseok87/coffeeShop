@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LayoutDashboard, Package, ShoppingBag, Plus, Minus, ChevronRight, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Plus, Minus, ChevronRight, AlertTriangle } from 'lucide-react'; // 아이콘
 
+/**
+ * 관리자 화면 (AdminScreen)
+ * 전체 주문 현황 모니터링, 주문 상태 변경, 재고 관리를 통합 수행하는 대시보드입니다.
+ */
 const AdminScreen = () => {
-    const [orders, setOrders] = useState([]);
-    const [menus, setMenus] = useState([]);
-    const [showCancelModal, setShowCancelModal] = useState(false);
-    const [orderToCancel, setOrderToCancel] = useState(null);
+    // --- 1. 상태(State) 관리 ---
+    const [orders, setOrders] = useState([]);      // 모든 주문 목록 데이터
+    const [menus, setMenus] = useState([]);        // 모든 메뉴 및 재고 데이터
+    const [showCancelModal, setShowCancelModal] = useState(false); // 취소 확인 모달 노출 여부
+    const [orderToCancel, setOrderToCancel] = useState(null);       // 취소 대상 주문의 ID
 
+    // --- 2. 데이터 자동 갱신 (useEffect) ---
+    // 처음 로드될 때와 5초 간격으로 서버에서 새 주문 정보를 가져옵니다.
     useEffect(() => {
-        fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
+        fetchData(); // 즉시 한 번 호출
+        const interval = setInterval(fetchData, 5000); // 5초(5000ms)마다 반복 호출
+        return () => clearInterval(interval); // 화면을 나갈 때 반복을 멈춥니다.
     }, []);
 
+    /** [데이터 가져오기] 주문 목록과 메뉴 목록을 동시에 병렬로(Promise.all) 가져옵니다. */
     const fetchData = async () => {
         try {
             const [orderRes, menuRes] = await Promise.all([
@@ -27,24 +35,30 @@ const AdminScreen = () => {
         }
     };
 
+    /** [주문 상태 업데이트] '주문 접수 -> 제조 중 -> 제조 완료' 순서로 상태를 변경합니다. */
     const updateStatus = (id, currentStatus) => {
         let nextStatus = '';
+        // 현재 상태에 따라 다음 단계의 상태를 결정합니다.
         if (currentStatus === '주문 접수') nextStatus = '제조 중';
         else if (currentStatus === '제조 중') nextStatus = '제조 완료';
-        else return;
+        else return; // 이미 완료되었거나 취소된 경우 아무 작업도 하지 않음
 
         axios.patch(`http://localhost:3001/api/admin/orders/${id}`, { status: nextStatus })
-            .then(() => fetchData())
+            .then(() => fetchData()) // 변경 후 최신 목록으로 화면 갱신
             .catch(err => alert('상태 업데이트 실패: ' + err.message));
     };
 
+    /** [실시간 재고 수정] 관리자가 직접 + / - 버튼으로 재고를 조절합니다. */
     const updateStock = (id, currentStock, delta) => {
+        // 0 미만으로 내려가지 않게 Math.max를 사용합니다.
         const newStock = Math.max(0, currentStock + delta);
         axios.patch(`http://localhost:3001/api/admin/menu/${id}/stock`, { stock: newStock })
             .then(() => fetchData())
             .catch(err => alert('재고 업데이트 실패: ' + err.message));
     };
 
+    // --- 3. 통계 데이터 계산 ---
+    // 전체 주문 리스트를 필터링하여 각 상태별 건수를 셉니다.
     const stats = {
         total: orders.length,
         pending: orders.filter(o => o.status === '주문 접수').length,
@@ -52,6 +66,7 @@ const AdminScreen = () => {
         done: orders.filter(o => o.status === '제조 완료').length
     };
 
+    /** 상태에 따라 배지(Badge) 색상을 결정하는 함수 */
     const getStatusBadgeClass = (status) => {
         if (status === '주문 접수') return 'badge-pending';
         if (status === '제조 중') return 'badge-preparing';
@@ -59,9 +74,10 @@ const AdminScreen = () => {
         return '';
     };
 
+    // --- 4. 화면 렌더링 (JSX) ---
     return (
         <div className="container">
-            {/* 1. Dashboard Stats */}
+            {/* 상단 통계 카드 영역 */}
             <div className="section-wrapper">
                 <div className="section-head">
                     <div>
@@ -90,7 +106,7 @@ const AdminScreen = () => {
                 </div>
             </div>
 
-            {/* 2. Inventory Management */}
+            {/* 재고 관리 영역 */}
             <div className="section-wrapper">
                 <div className="section-head">
                     <div>
@@ -115,7 +131,7 @@ const AdminScreen = () => {
                 </div>
             </div>
 
-            {/* 3. Recent Orders */}
+            {/* 최근 주문 목록 영역 */}
             <div className="section-wrapper">
                 <div className="section-head">
                     <div>
@@ -128,17 +144,19 @@ const AdminScreen = () => {
                     <div className="order-list">
                         {orders.length === 0 ? (
                             <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                No orders yet. Waiting for new orders...
+                                아직 들어온 주문이 없습니다.
                             </div>
                         ) : (
                             orders.map(order => (
                                 <div key={order.id} className="order-row">
+                                    {/* 주문 시각 표시 */}
                                     <div className="order-time">
                                         {new Date(order.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                         <div style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
                                             {new Date(order.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                                         </div>
                                     </div>
+                                    {/* 주문 상품 내용 */}
                                     <div className="order-content">
                                         {order.items.map((item, idx) => (
                                             <div key={idx} style={{ marginBottom: '0.2rem' }}>
@@ -151,6 +169,7 @@ const AdminScreen = () => {
                                     <div className="order-price">
                                         {order.totalAmount.toLocaleString()}원
                                     </div>
+                                    {/* 주문 상태 버튼 및 취소 버튼 */}
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', alignItems: 'center', whiteSpace: 'nowrap' }}>
                                         <div
                                             className={`badge ${getStatusBadgeClass(order.status)}`}
@@ -160,6 +179,7 @@ const AdminScreen = () => {
                                             {order.status}
                                             {order.status !== '제조 완료' && order.status !== '취소됨' && <ChevronRight size={14} />}
                                         </div>
+                                        {/* 취소하기 버튼 (주문 접수 상태일 때만 노출) */}
                                         {order.status === '주문 접수' && (
                                             <div
                                                 className="badge"
@@ -185,7 +205,8 @@ const AdminScreen = () => {
                     </div>
                 </div>
             </div>
-            {/* Premium Cancel Confirmation Modal */}
+
+            {/* 관리자용 주문 취소 확인 모달 */}
             {showCancelModal && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -212,9 +233,10 @@ const AdminScreen = () => {
                                 className="btn-main"
                                 style={{ flex: 1, background: '#c62828' }}
                                 onClick={() => {
+                                    // 서버로 '취소됨' 상태 전송
                                     axios.patch(`http://localhost:3001/api/admin/orders/${orderToCancel}`, { status: '취소됨' })
                                         .then(() => {
-                                            fetchData();
+                                            fetchData(); // 화면 갱신
                                             setShowCancelModal(false);
                                             setOrderToCancel(null);
                                         })
