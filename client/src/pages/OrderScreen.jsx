@@ -82,48 +82,66 @@ const OrderScreen = () => {
 
                 <div className="inventory-grid">
                     {menu.map(item => (
-                        <div key={item.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                                <h3 className="item-name" style={{ fontSize: '1.25rem' }}>{item.name}</h3>
-                                <Coffee size={20} color="var(--primary)" opacity={0.4} />
-                            </div>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', flex: 1 }}>{item.description}</p>
-
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <p style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '1rem' }}>{item.price.toLocaleString()}원</p>
-
-                                {item.options && item.options.length > 0 && (
-                                    <div style={{ background: 'rgba(61, 43, 31, 0.03)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                                        <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '1px' }}>Options</p>
-                                        {item.options.map(opt => (
-                                            <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', marginBottom: '0.4rem', cursor: 'pointer', fontWeight: '500' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(selectedOptions[item.id] || []).includes(opt.name)}
-                                                    onChange={() => toggleOption(item.id, opt)}
-                                                    style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                                                />
-                                                {opt.name} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{opt.price > 0 ? `(+${opt.price.toLocaleString()}원)` : ''}</span>
-                                            </label>
-                                        ))}
+                        <div key={item.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '0', overflow: 'hidden' }}>
+                            {/* Menu Image Area */}
+                            <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: '#f5f5f5', overflow: 'hidden' }}>
+                                {item.image_url ? (
+                                    <img
+                                        src={item.image_url}
+                                        alt={item.name}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                                        className="menu-card-img"
+                                    />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-cream)' }}>
+                                        <Coffee size={48} color="var(--primary)" opacity={0.2} />
                                     </div>
                                 )}
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.8rem', fontWeight: '600', color: item.stock < 5 ? '#e53935' : 'var(--text-muted)' }}>
-                                        {item.stock === 0 ? '품절' : `재고: ${item.stock}개`}
-                                    </span>
-                                </div>
                             </div>
 
-                            <button
-                                className="btn-main"
-                                onClick={() => addToCart(item)}
-                                disabled={item.stock <= 0}
-                                style={{ width: '100%', fontSize: '0.95rem' }}
-                            >
-                                {item.stock > 0 ? '장바구니 담기' : '잠시 품절'}
-                            </button>
+                            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                    <h3 className="item-name" style={{ fontSize: '1.25rem' }}>{item.name}</h3>
+                                    <Coffee size={20} color="var(--primary)" opacity={0.4} />
+                                </div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', flex: 1 }}>{item.description}</p>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <p style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '1rem' }}>{item.price.toLocaleString()}원</p>
+
+                                    {item.options && item.options.length > 0 && (
+                                        <div style={{ background: 'rgba(61, 43, 31, 0.03)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '1px' }}>Options</p>
+                                            {item.options.map(opt => (
+                                                <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', marginBottom: '0.4rem', cursor: 'pointer', fontWeight: '500' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(selectedOptions[item.id] || []).includes(opt.name)}
+                                                        onChange={() => toggleOption(item.id, opt)}
+                                                        style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                                    />
+                                                    {opt.name} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{opt.price > 0 ? `(+${opt.price.toLocaleString()}원)` : ''}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: '600', color: item.stock < 5 ? '#e53935' : 'var(--text-muted)' }}>
+                                            {item.stock === 0 ? '품절' : `재고: ${item.stock}개`}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="btn-main"
+                                    onClick={() => addToCart(item)}
+                                    disabled={item.stock <= 0}
+                                    style={{ width: '100%', fontSize: '0.95rem' }}
+                                >
+                                    {item.stock > 0 ? '장바구니 담기' : '잠시 품절'}
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
