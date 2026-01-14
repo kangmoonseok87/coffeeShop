@@ -23,18 +23,25 @@ const AdminScreen = () => {
         return () => clearInterval(interval);
     }, [API_URL]);
 
-    /** [데이터 가져오기] 주문 목록과 메뉴 목록을 동시에 병렬로(Promise.all) 가져옵니다. */
+    /** [데이터 가져오기] 주문 목록과 메뉴 목록을 각각 가져오며 실패 시에도 다른 데이터는 불러올 수 있도록 합니다. */
     const fetchData = async () => {
-        try {
-            const [orderRes, menuRes] = await Promise.all([
-                axios.get(`${API_URL}/api/admin/orders`),
-                axios.get(`${API_URL}/api/menu`)
-            ]);
-            setOrders(orderRes.data);
-            setMenus(menuRes.data);
-        } catch (err) {
-            console.error(err);
-        }
+        const token = localStorage.getItem('token');
+        const config = {
+            headers: { 'Authorization': `Bearer ${token}` }
+        };
+
+        // 주문 데이터 가져오기
+        axios.get(`${API_URL}/api/admin/orders`, config)
+            .then(res => setOrders(res.data))
+            .catch(err => {
+                console.error('주문 정보 로드 실패:', err);
+                // 401 Unauthorized 시 사용자 관리 화면의 처리와 유사하게 에러 상태 관리 가능
+            });
+
+        // 메뉴 데이터 가져오기
+        axios.get(`${API_URL}/api/menu`) // 메뉴 조회는 비인증으로도 가능할 수 있음 (주문 화면에서도 사용)
+            .then(res => setMenus(res.data))
+            .catch(err => console.error('메뉴 정보 로드 실패:', err));
     };
 
     /** [주문 상태 업데이트] '주문 접수 -> 제조 중 -> 제조 완료' 순서로 상태를 변경합니다. */
@@ -44,7 +51,11 @@ const AdminScreen = () => {
         if (currentStatus === '주문 접수') nextStatus = '제조 중';
         else if (currentStatus === '제조 중') nextStatus = '제조 완료';
         else return;
-        axios.patch(`${API_URL}/api/admin/orders/${id}`, { status: nextStatus })
+        const token = localStorage.getItem('token');
+        axios.patch(`${API_URL}/api/admin/orders/${id}`,
+            { status: nextStatus },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+        )
             .then(() => fetchData()) // 변경 후 최신 목록으로 화면 갱신
             .catch(err => alert('상태 업데이트 실패: ' + err.message));
     };
@@ -53,7 +64,11 @@ const AdminScreen = () => {
     const updateStock = (id, currentStock, delta) => {
         // 0 미만으로 내려가지 않게 Math.max를 사용합니다.
         const newStock = Math.max(0, currentStock + delta);
-        axios.patch(`${API_URL}/api/admin/menu/${id}/stock`, { stock: newStock })
+        const token = localStorage.getItem('token');
+        axios.patch(`${API_URL}/api/admin/menu/${id}/stock`,
+            { stock: newStock },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+        )
             .then(() => fetchData())
             .catch(err => alert('재고 업데이트 실패: ' + err.message));
     };
@@ -234,8 +249,12 @@ const AdminScreen = () => {
                                 className="btn-main"
                                 style={{ flex: 1, background: '#c62828' }}
                                 onClick={() => {
+                                    const token = localStorage.getItem('token');
                                     // 서버로 '취소됨' 상태 전송
-                                    axios.patch(`${API_URL}/api/admin/orders/${orderToCancel}`, { status: '취소됨' })
+                                    axios.patch(`${API_URL}/api/admin/orders/${orderToCancel}`,
+                                        { status: '취소됨' },
+                                        { headers: { 'Authorization': `Bearer ${token}` } }
+                                    )
                                         .then(() => {
                                             fetchData(); // 화면 갱신
                                             setShowCancelModal(false);

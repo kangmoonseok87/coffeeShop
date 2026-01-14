@@ -6,6 +6,8 @@
 const { Pool } = require('pg'); // PostgreSQL과 통신하기 위한 도구(Pool)를 불러옵니다.
 require('dotenv').config(); // .env 파일의 설정값들을 읽어옵니다.
 
+const isLocal = process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
+
 // 1. 데이터베이스 접속 정보 설정 (Pool 생성)
 // DATABASE_URL이 있으면 (배포 환경) 이를 먼저 사용하고, 없으면 로컬 설정값들을 사용합니다.
 const dbConfig = process.env.DATABASE_URL
@@ -19,7 +21,8 @@ const dbConfig = process.env.DATABASE_URL
         database: process.env.DB_NAME,
         password: process.env.DB_PASSWORD,
         port: process.env.DB_PORT,
-        ssl: { rejectUnauthorized: false } // 개별 변수 사용 시에도 SSL 필수
+        // 로컬(localhost) 접속 시에는 SSL을 사용하지 않고, 그 외(원격)에는 SSL을 사용합니다.
+        ssl: isLocal ? false : { rejectUnauthorized: false }
     };
 
 const pool = new Pool(dbConfig);

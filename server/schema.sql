@@ -42,9 +42,32 @@ CREATE TABLE IF NOT EXISTS order_items (
     selected_options TEXT                                     -- 선택한 옵션들 (예: "샷 추가, 시럽")
 );
 
+-- 5. 권한 테이블
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(20) UNIQUE NOT NULL  -- Admin, Manager, Staff 등
+);
+
+-- 6. 사용자 테이블
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role_id INTEGER REFERENCES roles(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- [초기 데이터 입력]
 -- 테이블을 깨끗이 비우고 기본 메뉴 데이터들을 채워넣습니다.
-TRUNCATE menus, options, orders, order_items RESTART IDENTITY CASCADE;
+TRUNCATE menus, options, orders, order_items, users, roles RESTART IDENTITY CASCADE;
+
+-- 기본 권한 입력
+INSERT INTO roles (name) VALUES ('Admin'), ('Manager'), ('Staff');
+
+-- 기본 관리자 계정 입력 (비밀번호: admin123)
+INSERT INTO users (username, password_hash, role_id) 
+VALUES ('admin', '$2b$10$LqQBizfLLGkIXEvnP8HJD.zm2wnJXCBxKc/SOhU4AV4H3aQgnDd5C', 1); 
+-- 참고: 위 해시는 실제 bcrypt로 생성해야 함. 구현 과정에서 업데이트 예정.
 
 -- 기본 메뉴 입력
 INSERT INTO menus (name, price, category, stock, image_url, description) VALUES

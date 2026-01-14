@@ -6,6 +6,8 @@ require('dotenv').config();
 async function runSchema() {
     console.log('--- Render DB 초기화 시작 ---');
 
+    const isLocal = process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
+
     // 연결 설정 뭉치
     const dbConfig = process.env.DATABASE_URL
         ? {
@@ -18,7 +20,8 @@ async function runSchema() {
             database: process.env.DB_NAME,
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
-            ssl: { rejectUnauthorized: false }
+            // 로컬(localhost) 접속 시에는 SSL을 사용하지 않고, 그 외(원격)에는 SSL을 사용합니다.
+            ssl: isLocal ? false : { rejectUnauthorized: false }
         };
 
     const pool = new Pool(dbConfig);
