@@ -104,6 +104,40 @@ nav a.active {
   background: rgba(229, 57, 53, 0.05);
 }
 
+/* Header & Nav Responsive */
+@media (max-width: 768px) {
+  header {
+    padding: 0.8rem 0;
+  }
+  
+  header .container {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+
+  nav a, .nav-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+  
+  nav a svg, .nav-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 
 /* Section Common */
 .section-wrapper {

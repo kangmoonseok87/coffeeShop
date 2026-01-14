@@ -165,7 +165,7 @@ const UserManagement = () => {
                     <p className="subtitle">전체 {users.length}명의 사용자가 등록되어 있습니다.</p>
                 </div>
                 {error && <p className="error-text">{error}</p>}
-                <div className="table-responsive">
+                <div className="table-responsive desktop-only">
                     <table className="user-table">
                         <thead>
                             <tr>
@@ -212,6 +212,34 @@ const UserManagement = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* 모바일용 카드 레이아웃 */}
+                <div className="mobile-only user-cards-container">
+                    {users.map(u => (
+                        <div key={u.id} className={`user-mobile-card ${editingUser?.id === u.id ? 'active-card' : ''}`}>
+                            <div className="card-top">
+                                <span className="id-badge">#{u.id}</span>
+                                <span className={`badge role-${u.role.toLowerCase()}`}>
+                                    {u.role === 'Admin' ? '관리자' : u.role === 'Manager' ? '매니저' : '직원'}
+                                </span>
+                            </div>
+                            <div className="card-body-info">
+                                <span className="username-text">{u.username}</span>
+                                <span className="date-text">{new Date(u.created_at).toLocaleDateString()} 가입</span>
+                            </div>
+                            <div className="card-actions">
+                                <button onClick={() => handleEditClick(u)} className="mobile-action-btn edit">
+                                    <Edit2 size={18} /> 수정하기
+                                </button>
+                                {u.id !== currentUser.id && (
+                                    <button onClick={() => requestDeleteUser(u.id)} className="mobile-action-btn delete">
+                                        <Trash2 size={18} /> 삭제하기
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -454,6 +482,69 @@ const UserManagement = () => {
                     font-weight: normal;
                 }
 
+                /* 데스크탑/모바일 표시 제어 */
+                .mobile-only { display: none; }
+                .desktop-only { display: block; }
+
+                /* 모바일 카드 스타일 */
+                .user-cards-container {
+                    flex-direction: column;
+                    gap: 1rem;
+                }
+                .user-mobile-card {
+                    background: white;
+                    border: 1px solid var(--border-light);
+                    border-radius: 16px;
+                    padding: 1.2rem;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+                }
+                .active-card {
+                    border: 2px solid var(--accent);
+                    background: rgba(198, 166, 100, 0.02);
+                }
+                .card-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 0.8rem;
+                }
+                .card-body-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.3rem;
+                    margin-bottom: 1.2rem;
+                }
+                .date-text {
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                }
+                .card-actions {
+                    display: flex;
+                    gap: 0.8rem;
+                }
+                .mobile-action-btn {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    padding: 0.7rem;
+                    border-radius: 10px;
+                    border: none;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .mobile-action-btn.edit {
+                    background: #f5f5f5;
+                    color: var(--primary);
+                }
+                .mobile-action-btn.delete {
+                    background: #fff1f0;
+                    color: #d32f2f;
+                }
+
                 /* 삭제 모달 전용 스타일 */
                 .delete-modal {
                     background: white;
@@ -508,17 +599,27 @@ const UserManagement = () => {
 
                 /* 모바일 대응 스타일 */
                 @media (max-width: 768px) {
+                    .mobile-only { display: flex !important; }
+                    .desktop-only { display: none !important; }
+
+                    .user-cards-container {
+                        display: flex;
+                        padding: 1rem 1.5rem 2rem;
+                    }
+
                     .admin-header-flex {
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 1rem;
+                        margin: 1.5rem 0 1rem;
+                        padding: 0 1.5rem;
                     }
                     .add-btn {
                         width: 100%;
                         justify-content: center;
                     }
                     .card-header {
-                        padding: 1.5rem 1rem;
+                        padding: 1.5rem 1.5rem 1rem;
                     }
                     .table-responsive {
                         padding: 1rem 0.5rem;
