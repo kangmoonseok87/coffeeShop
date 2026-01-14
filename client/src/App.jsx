@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, User, Coffee, Shield, UtensilsCrossed } from 'lucide-react';
+import { LogOut, User, Coffee, Shield, UtensilsCrossed, Menu, X } from 'lucide-react';
 import OrderScreen from './pages/OrderScreen';
 import AdminScreen from './pages/AdminScreen';
 import Login from './pages/Login';
@@ -14,44 +14,56 @@ import ProtectedRoute from './components/ProtectedRoute';
  * 로고와 메뉴 버튼이 있으며, 현재 내가 어떤 페이지에 있는지(active) 표시해줍니다.
  */
 const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    setIsMenuOpen(false);
     navigate('/login');
   };
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header>
       <div className="container">
         <h1>COZY</h1>
-        <nav>
+
+        {user && (
+          <button className="menu-toggle" onClick={toggleMenu}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        )}
+
+        <nav className={isMenuOpen ? 'nav-open' : ''}>
           {user ? (
             <>
               {/* 모든 사용자가 접근 가능 */}
-              <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+              <Link to="/" className={location.pathname === '/' ? 'active' : ''} onClick={closeMenu}>
                 <Coffee size={18} /> 주문하기
               </Link>
 
               {/* 관리자 권한이 있는 경우에만 표시 */}
               {user.role !== 'Staff' && (
-                <Link to="/admin" className={location.pathname === '/admin' ? 'active' : ''}>
+                <Link to="/admin" className={location.pathname === '/admin' ? 'active' : ''} onClick={closeMenu}>
                   <Shield size={18} /> 관리자
                 </Link>
               )}
 
               {/* 관리자인 경우 사용자 관리 메뉴 추가 */}
               {user.role === 'Admin' && (
-                <Link to="/admin/users" className={location.pathname === '/admin/users' ? 'active' : ''}>
+                <Link to="/admin/users" className={location.pathname === '/admin/users' ? 'active' : ''} onClick={closeMenu}>
                   <User size={18} /> 사용자 관리
                 </Link>
               )}
 
               {/* Admin 또는 Manager인 경우 메뉴 관리 메뉴 추가 */}
               {(user.role === 'Admin' || user.role === 'Manager') && (
-                <Link to="/admin/menu" className={location.pathname === '/admin/menu' ? 'active' : ''}>
+                <Link to="/admin/menu" className={location.pathname === '/admin/menu' ? 'active' : ''} onClick={closeMenu}>
                   <UtensilsCrossed size={18} /> 메뉴 관리
                 </Link>
               )}
@@ -61,7 +73,7 @@ const Header = () => {
               </button>
             </>
           ) : (
-            <Link to="/login" className={location.pathname === '/login' ? 'active' : ''}>로그인</Link>
+            <Link to="/login" className={location.pathname === '/login' ? 'active' : ''} onClick={closeMenu}>로그인</Link>
           )}
         </nav>
       </div>
