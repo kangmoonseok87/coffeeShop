@@ -20,8 +20,8 @@ async function runSchema() {
             database: process.env.DB_NAME,
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
-            // 로컬(localhost) 접속 시에는 SSL을 사용하지 않고, 그 외(원격)에는 SSL을 사용합니다.
-            ssl: isLocal ? false : { rejectUnauthorized: false }
+            // 로컬(localhost) 또는 DB_SSL=false 설정 시에는 SSL을 사용하지 않고, 그 외에는 SSL을 사용합니다.
+            ssl: (isLocal || process.env.DB_SSL === 'false') ? false : { rejectUnauthorized: false }
         };
 
     const pool = new Pool(dbConfig);

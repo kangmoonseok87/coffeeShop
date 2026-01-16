@@ -520,4 +520,6 @@ app.delete('/api/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
 // 4. 서버 시작 (귀를 기울여 기다리기)
 app.listen(PORT, () => {
     console.log(`서버가 성공적으로 실행되었습니다! : http://localhost:${PORT}`);
+}).on('error', (err) => {
+    console.error('서버 실행 중 오류 발생:', err);
 });
