@@ -24,6 +24,17 @@ const PORT = process.env.PORT || 5000; // 서버가 사용할 포트 번호를 �
 app.use(cors());
 app.use(express.json()); // 요청 본문의 JSON 데이터를 해석해줍니다.
 
+// 2-1. 업로드 폴더 자동 생성 및 정적 경로 설정
+const fs = require('fs');
+const uploadDir = path.join(__dirname, '../client/public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log(`업로드 폴더 생성됨: ${uploadDir}`);
+}
+
+// 클라이언트 사이드에서 /uploads 로 접근 가능하게 정적 파일 서비스 설정
+app.use('/uploads', express.static(uploadDir));
+
 // Multer 설정: 이미지 파일 업로드 처리
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -127,18 +138,28 @@ app.get('/api/menu', async (req, res) => {
 });
 
 // [관리자 전용: 이미지 업로드] 메뉴 이미지를 업로드하고 URL을 반환합니다.
-app.post('/api/admin/upload', verifyToken, isManager, upload.single('image'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: '파일이 업로드되지 않았습니다.' });
+app.post('/api/admin/upload', verifyToken, isManager, (req, res) => {
+    upload.single('image')(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            // Multer 자체 에러 (파일 크기 초과 등)
+            return res.status(400).json({ message: '파일 업로드 에러: ' + err.message });
+        } else if (err) {
+            // 기타 에러 (이미지 파일 형식이 아닌 경우 등)
+            return res.status(400).json({ message: err.message });
         }
-        // 클라이언트에서 접근 가능한 상대 경로 반환
-        const imageUrl = `/uploads/${req.file.filename}`;
-        res.json({ imageUrl });
-    } catch (err) {
-        console.error('이미지 업로드 실패:', err);
-        res.status(500).json({ message: '이미지 업로드에 실패했습니다.' });
-    }
+
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: '파일이 업로드되지 않았습니다.' });
+            }
+            // 클라이언트에서 접근 가능한 상대 경로 반환
+            const imageUrl = `/uploads/${req.file.filename}`;
+            res.json({ imageUrl });
+        } catch (err) {
+            console.error('이미지 업로드 처리 실패:', err);
+            res.status(500).json({ message: '이미지 처리 중 오류가 발생했습니다.' });
+        }
+    });
 });
 
 // [관리자 전용: 메뉴 추가] 새로운 메뉴와 옵션을 등록합니다.

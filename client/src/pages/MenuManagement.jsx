@@ -38,23 +38,32 @@ const MenuManagement = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('image', file);
+        // 선택 즉시 로컬에서 미리보기 보여주기 (UX 개선)
+        const localPreview = URL.createObjectURL(file);
+        setImagePreview(localPreview);
+
+        const uploadData = new FormData();
+        uploadData.append('image', file);
 
         setUploadingImage(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/api/admin/upload`, formData, {
+            const response = await axios.post(`${API_URL}/api/admin/upload`, uploadData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
             const imageUrl = response.data.imageUrl;
+
+            // 업로드 성공 후 서버에서 받은 URL로 교체
             setFormData(prev => ({ ...prev, image_url: imageUrl }));
             setImagePreview(imageUrl);
         } catch (err) {
+            console.error('이미지 업로드 상세 에러:', err);
             alert('이미지 업로드 실패: ' + (err.response?.data?.message || err.message));
+            // 실패 시 프리뷰 초기화 또는 이전 상태로 복구
+            setImagePreview(formData.image_url || '');
         } finally {
             setUploadingImage(false);
         }
