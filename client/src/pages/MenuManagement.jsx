@@ -26,7 +26,12 @@ const MenuManagement = () => {
         if (!url) return '';
         if (url.startsWith('blob:')) return url; // 로컬 프리뷰(blob)는 그대로 반환
         if (url.startsWith('http')) return url; // 이미 전체 경로면 그대로 반환
-        return `${API_URL}${url}`; // /uploads/... 형태면 서버 주소 결합
+        // /uploads로 시작하는 경우에만 백엔드 주소 결합
+        if (url.startsWith('/uploads')) {
+            return `${API_URL}${url}`;
+        }
+        // 그 외의 경우 (예: /americano.png)는 프론트엔드 static 파일이므로 그대로 반환
+        return url;
     };
 
     useEffect(() => {
