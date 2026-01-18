@@ -17,6 +17,13 @@ const OrderScreen = () => {
     // 배포 환경의 주소를 사용하고, 없으면 기본 로컬 주소를 사용합니다.
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+    // 이미지 경로를 절대 경로(서버 주소 포함)로 변환해주는 유틸리티 함수
+    const getFullImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url; // 이미 전체 경로면 그대로 반환
+        return `${API_URL}${url}`; // /uploads/... 형태면 서버 주소 결합
+    };
+
     useEffect(() => {
         axios.get(`${API_URL}/api/menu`)
             .then(res => setMenu(res.data))
@@ -114,7 +121,7 @@ const OrderScreen = () => {
                             <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: '#f5f5f5', overflow: 'hidden' }}>
                                 {item.image_url ? (
                                     <img
-                                        src={item.image_url}
+                                        src={getFullImageUrl(item.image_url)}
                                         alt={item.name}
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
                                         className="menu-card-img"

@@ -21,6 +21,14 @@ const MenuManagement = () => {
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+    // 이미지 경로를 절대 경로(서버 주소 포함)로 변환해주는 유틸리티 함수
+    const getFullImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('blob:')) return url; // 로컬 프리뷰(blob)는 그대로 반환
+        if (url.startsWith('http')) return url; // 이미 전체 경로면 그대로 반환
+        return `${API_URL}${url}`; // /uploads/... 형태면 서버 주소 결합
+    };
+
     useEffect(() => {
         fetchMenus();
     }, []);
@@ -189,7 +197,7 @@ const MenuManagement = () => {
                             <div style={{ position: 'relative', width: '100%', height: '200px', backgroundColor: '#f5f5f5', overflow: 'hidden' }}>
                                 {menu.image_url ? (
                                     <img
-                                        src={menu.image_url}
+                                        src={getFullImageUrl(menu.image_url)}
                                         alt={menu.name}
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                     />
@@ -243,7 +251,7 @@ const MenuManagement = () => {
                                 <label className="section-label" style={{ fontSize: '0.75rem', display: 'block', marginBottom: '0.5rem' }}>이미지 업로드</label>
                                 <div style={{ border: '2px dashed var(--border-light)', borderRadius: '16px', padding: '1.5rem', textAlign: 'center', position: 'relative', background: 'rgba(61,43,31,0.02)' }}>
                                     {imagePreview ? (
-                                        <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                        <img src={getFullImageUrl(imagePreview)} alt="Preview" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                     ) : (
                                         <div style={{ padding: '1rem' }}>
                                             <Upload size={32} color="var(--primary)" opacity={0.3} style={{ marginBottom: '0.5rem' }} />
